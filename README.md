@@ -16,7 +16,7 @@ where the configuration options are defined as appropriate in config.sh
 
 Much of this project is based on the work of these projects:
 
-https://devcentral.f5.com/codeshare/lets-encrypt-on-a-big-ip
-https://github.com/lukas2511/letsencrypt.sh
-https://github.com/sporky/letsencrypt-dns
-https://github.com/major/letsencrypt-rackspace-hook
+* https://devcentral.f5.com/codeshare/lets-encrypt-on-a-big-ip
+* https://github.com/lukas2511/letsencrypt.sh
+* https://github.com/sporky/letsencrypt-dns
+* https://github.com/major/letsencrypt-rackspace-hook
