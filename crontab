@@ -1,0 +1,1 @@
+0 5 * * * root source /opt/le/.envdocker && /opt/le/letsencrypt.sh --cron -f /opt/le/config/config.sh >> /var/log/cron.log 2>&1
