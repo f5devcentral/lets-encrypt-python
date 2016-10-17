@@ -13,19 +13,13 @@ import ultra_rest_client as ultradns
 
 requests.packages.urllib3.disable_warnings()
 
-# slurp credentials
-with open('config/creds.json', 'r') as f:
-    config = json.load(f)
-f.close()
-
-f5_host = config['f5host']
-f5_user = config['f5acct']
-f5_password = config['f5pw']
-udns_username = config['dnsacct']
-udns_password = config['dnspw']
+f5_host = os.environ['LE_F5_HOSTNAME']
+f5_user = os.environ['LE_F5_USERNAME']
+f5_password = os.environ['LE_F5_PASSWORD']
+udns_username = os.environ['LE_UDNS_USERNAME']
+udns_password = os.environ['LE_UDNS_PASSWORD']
 
 udns = ultradns.RestApiClient(udns_username, udns_password)
-
 
 # Logging
 logger = logging.getLogger(__name__)

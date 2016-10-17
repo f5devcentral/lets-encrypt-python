@@ -20,3 +20,8 @@ Much of this project is based on the work of these projects:
 * https://github.com/lukas2511/letsencrypt.sh
 * https://github.com/sporky/letsencrypt-dns
 * https://github.com/major/letsencrypt-rackspace-hook
+
+## Additional setup
+### 11.5.1
+- SSH to F5
+- `mkdir -p /var/config/rest/downloads/tmp`  

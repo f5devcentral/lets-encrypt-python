@@ -1,2 +1,2 @@
 # example domain
-# domain.com www.domain.com
+domain.com www.domain.com

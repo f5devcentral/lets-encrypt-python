@@ -11,7 +11,7 @@
 
 
 # E-mail to use during the registration (default: <unset>)
-CONTACT_EMAIL=youremail@yourdomain.tld
+CONTACT_EMAIL=you@yourdomain.tld
 
 # Which public key algorithm should be used? Supported: rsa, prime256v1 and secp384r1
 KEY_ALGO=rsa
@@ -31,7 +31,7 @@ CHALLENGETYPE="dns-01"
 # the defaults found in the main configuration file. Additional config files
 # in this directory needs to be named with a '.sh' ending.
 # default: <unset>
-CONFIG_D="/var/tmp/le/config"
+# CONFIG_D="/var/tmp/le/config"
 
 # Program or function called in certain situations
 #
@@ -43,7 +43,7 @@ CONFIG_D="/var/tmp/le/config"
 #
 # BASEDIR and WELLKNOWN variables are exported and can be used in an external program
 # default: <unset>
-HOOK=/var/tmp/le/le_hook.py
+HOOK=$(pwd)/le_hook.py
 
 
 # Base directory for account key, generated certificates and list of domains (default: $SCRIPTDIR -- uses config directory if undefined)
@@ -62,7 +62,7 @@ HOOK=/var/tmp/le/le_hook.py
 #KEYSIZE="4096"
 
 # Path to openssl config file (default: <unset> - tries to figure out system default)
-OPENSSL_CNF=/etc/ssl/openssl.cnf
+# OPENSSL_CNF=/etc/ssl/openssl.cnf
 
 # Chain clean_challenge|deploy_challenge arguments together into one hook call per certificate (default: no)
 #HOOK_CHAIN="no"

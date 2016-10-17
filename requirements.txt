@@ -1,0 +1,15 @@
+backports-abc==0.4
+certifi==2016.9.26
+f5-icontrol-rest==1.0.9
+f5-sdk==1.5.0
+idna==2.1
+mongoengine==0.10.6
+pymongo==3.3.0
+requests==2.10.0
+requests-file==1.4.1
+singledispatch==3.4.0.3
+six==1.10.0
+tldextract==2.0.2
+tornado==4.4.2
+ultra-rest-client==0.1.4
+WTForms==2.1
