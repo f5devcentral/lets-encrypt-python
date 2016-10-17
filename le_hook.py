@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import requests
 import json
@@ -18,8 +18,8 @@ with open('config/creds.json', 'r') as f:
 f.close()
 
 api_host = config['dnshost']
-api_acct = config['dnsacct']
-api_token = config['apitoken']
+api_key = config['apikey']
+api_secret = config['apisecret']
 f5_host = config['f5host']
 f5_user = config['f5acct']
 f5_password = config['f5pw']
@@ -27,40 +27,52 @@ f5_password = config['f5pw']
 # Logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
-# Name.com Nameservers
-dns_servers = []
-for ns in range(1, 5):
-    dns_servers.append('ns%d.name.com' % ns)
-
-# Resolve IPs for nameservers
-resolver = dns.resolver.Resolver()
-namedotcom_dns_servers = [item.address for server in dns_servers
-                          for item in resolver.query(server)]
-
+def dump(obj):
+  for attr in dir(obj):
+    print "obj.%s = %s" % (attr, getattr(obj, attr))
 
 def _has_dns_propagated(name, token):
     successes = 0
-    for dns_server in namedotcom_dns_servers:
+    dns_servers = []
+    
+    fqdn_tuple = extract(name)
+    base_domain_name = ".".join([fqdn_tuple.domain, fqdn_tuple.suffix])
+    
+    for rdata in dns.resolver.query(base_domain_name, 'NS') :
+        ip_addr = dns.resolver.query(rdata.target, 'A')
+        dns_servers.append(str(ip_addr[0]))
+    
+    for dns_server in dns_servers:
+        resolver = dns.resolver.Resolver()
         resolver.nameservers = [dns_server]
 
+        logger.info("Processing domain: {0}...".format(base_domain_name))
+        logger.debug("Searching TXT {0} with value {1} on dns server {2}".format(name, token, dns_server))
+        
         try:
-            dns_response = resolver.query(name, 'txt')
+            dns_response = resolver.query(name, 'TXT')
         except dns.exception.DNSException as error:
+            logger.error(error)
             return False
-
+        
         text_records = [record.strings[0] for record in dns_response]
         for text_record in text_records:
             if text_record == token:
+                logger.debug("Found!!!! TXT {0} with value {1} on dns server {2}".format(name, text_record, dns_server))
                 successes += 1
+                logger.debug("SUCCESS count: {0}".format(successes))
 
-    if successes == 4:
+    if successes == len(dns_servers):
         logger.info(" + (hook) All challenge records found!")
         return True
     else:
         return False
 
+while not _has_dns_propagated('nfl.com', 'MS=ms1802466'):
+    logger.info(" + (hook) DNS not propagated, waiting 30s...")
+    time.sleep(10)
 
 def create_txt_record(args):
     """
@@ -236,3 +248,4 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
+    print "end of main function"
