@@ -25,3 +25,46 @@ Much of this project is based on the work of these projects:
 ### 11.5.1
 - SSH to F5
 - `mkdir -p /var/config/rest/downloads/tmp`  
+
+## Docker
+
+- Set your `CONTACT_EMAIL` in [config/config.sh](./config/config.sh)
+```
+...
+# E-mail to use during the registration (default: <unset>)
+CONTACT_EMAIL=you@yourdomain.tld
+...
+```
+
+- Add your desired domains/subdomains to [config/domains.txt](./config/domains.txt)
+```
+mydomain.com server1.mydomain.com
+example.com www.example.com server1.example.com
+```
+
+- Set up your variables in your `.envdocker` file
+```
+LE_UDNS_USERNAME="udnsadmin"
+LE_UDNS_PASSWORD="udnsadmin"
+LE_F5_HOSTNAME="172.16.0.10"
+LE_F5_USERNAME="f5user"
+LE_F5_PASSWORD="f5password"
+```
+
+- Build the container 
+```
+cd lets-encrypt-python
+docker build -t le .
+```
+
+- Run the container in ad-hoc mode (Script will execute immediately with no recurring no cron job)
+```
+cd lets-encrypt-python
+docker run -it -v $(pwd):/opt/le --env-file .envdocker le /opt/le/letsencrypt.sh --cron -f /opt/le/config/config.sh 
+```
+
+- Run the container in cron mode (Script will run once at 5AM daily)
+```
+cd lets-encrypt-python
+docker run -d -v $(pwd):/opt/le --env-file .envdocker le
+```
