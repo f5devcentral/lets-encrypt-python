@@ -1,0 +1,5 @@
+LE_UDNS_USERNAME="udnsadmin"
+LE_UDNS_PASSWORD="udnsadmin"
+LE_F5_HOSTNAME="172.16.0.10"
+LE_F5_USERNAME="f5user"
+LE_F5_PASSWORD="f5password"
