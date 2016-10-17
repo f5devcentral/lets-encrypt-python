@@ -9,6 +9,7 @@ from f5.bigip import ManagementRoot
 import os
 import sys
 import time
+import ultra_rest_client as ultradns
 
 requests.packages.urllib3.disable_warnings()
 
@@ -17,12 +18,14 @@ with open('config/creds.json', 'r') as f:
     config = json.load(f)
 f.close()
 
-api_host = config['dnshost']
-api_key = config['apikey']
-api_secret = config['apisecret']
 f5_host = config['f5host']
 f5_user = config['f5acct']
 f5_password = config['f5pw']
+udns_username = config['dnsacct']
+udns_password = config['dnspw']
+
+udns = ultradns.RestApiClient(udns_username, udns_password)
+
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -36,18 +39,18 @@ def dump(obj):
 def _has_dns_propagated(name, token):
     successes = 0
     dns_servers = []
-    
     fqdn_tuple = extract(name)
     base_domain_name = ".".join([fqdn_tuple.domain, fqdn_tuple.suffix])
     
+    # Get all Nameservers' IP addresses for base_domain_name
     for rdata in dns.resolver.query(base_domain_name, 'NS') :
         ip_addr = dns.resolver.query(rdata.target, 'A')
         dns_servers.append(str(ip_addr[0]))
-    
+
+    # Query each nameserver for the challenge record we are searching for.
     for dns_server in dns_servers:
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [dns_server]
-
         logger.info("Processing domain: {0}...".format(base_domain_name))
         logger.debug("Searching TXT {0} with value {1} on dns server {2}".format(name, token, dns_server))
         
@@ -59,24 +62,24 @@ def _has_dns_propagated(name, token):
         
         text_records = [record.strings[0] for record in dns_response]
         for text_record in text_records:
+            # If we found our challenge record on a nameserver, increment success counter.
             if text_record == token:
                 logger.debug("Found!!!! TXT {0} with value {1} on dns server {2}".format(name, text_record, dns_server))
                 successes += 1
                 logger.debug("SUCCESS count: {0}".format(successes))
 
+    # Once success counter reaches number of DNS servers, we must be in a successful state
     if successes == len(dns_servers):
         logger.info(" + (hook) All challenge records found!")
+        logger.info(" + (hook) waiting 30s for the internet to catch up...")
+        time.sleep(30)
         return True
     else:
         return False
 
-while not _has_dns_propagated('nfl.com', 'MS=ms1802466'):
-    logger.info(" + (hook) DNS not propagated, waiting 30s...")
-    time.sleep(10)
-
 def create_txt_record(args):
     """
-    Create a TXT DNS record via name.com's DNS API
+    Create a TXT DNS record via UltraDNS API
     """
     domain_name, token = args[0], args[2]
     fqdn_tuple = extract(domain_name)
@@ -87,27 +90,13 @@ def create_txt_record(args):
     else:
         txtrecord = u'_acme-challenge.{0}'.format(fqdn_tuple.subdomain)
     name = "{0}.{1}".format(txtrecord,base_domain_name)
-    record = {
-        'hostname' : txtrecord,
-        'type' : u'TXT',
-        'content': token,
-        'ttl': u'300',
-        'priority': u'10'
-    }
-
-    b = requests.session()
-    b.verify = False
-    b.headers.update({u'Content-Type': u'application/json',
-                     u'Api-Username': api_acct,
-                     u'Api-Token': api_token})
-    url = u'https://{0}/api/dns/create/{1}'.format(api_host, base_domain_name)
-    create_record = b.post(url, json.dumps(record)).json()
-    logger.info(" + (hook) TXT record created: {0}.{1} => {2}".format(
-        txtrecord, base_domain_name, token))
-    logger.info(" + (hook) Result: {0}".format(create_record['result']))
+    
+    create_record = udns.create_rrset(base_domain_name, 'TXT', txtrecord, 300, token)
+    logger.debug("Create TXT record {0} result: {1}".format(txtrecord, create_record))
     logger.info(" + (hook) Settling down for 10s...")
     time.sleep(10)
 
+    # Wait for DNS to propagate
     while not _has_dns_propagated(name, token):
         logger.info(" + (hook) DNS not propagated, waiting 30s...")
         time.sleep(30)
@@ -115,33 +104,21 @@ def create_txt_record(args):
 
 def delete_txt_record(args):
     """
-    Delete the TXT DNS challenge record via name.com's DNS API
+    Delete the TXT DNS challenge record via UltraDNS API
     """
     domain_name = args[0]
     fqdn_tuple = extract(domain_name)
     base_domain_name = ".".join([fqdn_tuple.domain, fqdn_tuple.suffix])
-
-    b = requests.session()
-    b.verify = False
-    b.headers.update({u'Content-Type': u'application/json',
-                      u'Api-Username': api_acct,
-                      u'Api-Token': api_token})
-    url = u'https://{0}/api/dns/list/{1}'.format(api_host, base_domain_name)
-
-    records = b.get(url).json()
-
-    for record in records['records']:
-        if record['type'] == 'TXT' and u'_acme-challenge' in record['name']:
-            record_id = record['record_id']
-
-    record_payload = {u'record_id': record_id}
-    url = u'https://{0}/api/dns/delete/{1}'.format(api_host, base_domain_name)
-
-    delete_record = b.post(url, json.dumps(record_payload)).json()
-
-    logger.info(" + (hook) TXT record deleted: {0}".format(record_id))
-    logger.info(" + (hook) Result: {0}".format(delete_record['result']))
-
+    
+    # Get all TXT records for the base_domain
+    records = udns.get_rrsets_by_type(base_domain_name, "TXT")
+    
+    for record in records['rrSets']:        
+        # If it looks like an Acme challenge record, delete it
+        if u'_acme-challenge' in record['ownerName']:
+            print("Record: {0}".format(record['ownerName']))
+            delete_record = udns.delete_rrset(base_domain_name, "TXT", record['ownerName'])
+            logger.info(" + (hook) Deleted challenge record {0}. Result: {1}".format(record['ownerName'], delete_record))
 
 def deploy_cert(args):
     domain = args[0]
