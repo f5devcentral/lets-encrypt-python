@@ -2,31 +2,17 @@
 
 This project uses Lukas2511's letsencrypt.sh shell script as the basis for deploying certificates to an F5 BIG-IP.
 
-It utilizes the DNS challenge and reaches out to name.com's API (currently beta) for the challenge setup and teardown. Major (below reference) has example for Rackspace DNS that this is based on.
+It utilizes the DNS challenge and reaches out to UltraDNS's API (currently beta) for the challenge setup and teardown. Major (below reference) has example for Rackspace DNS that this is based on.
 
 It utilizes F5's iControl REST interface to upload and configure the certificates into a clientssl profile for SSL offloading capability.
 
-## Usage
-
-./letsencrypt.sh -c -f /var/tmp/le/config/config.sh
-
-where the configuration options are defined as appropriate in config.sh
-
-## Contributors
-
-Much of this project is based on the work of these projects:
-
-* https://devcentral.f5.com/codeshare/lets-encrypt-on-a-big-ip
-* https://github.com/lukas2511/letsencrypt.sh
-* https://github.com/sporky/letsencrypt-dns
-* https://github.com/major/letsencrypt-rackspace-hook
-
-## Additional setup
-### 11.5.1
+## Setup
+### BigIP 11.5.1
 - SSH to F5
 - `mkdir -p /var/config/rest/downloads/tmp`  
 
 ## Docker
+In order to reduce the pain of installing the required python modules, and setting up a virtual environment, you can use the below Docker instructions for deployment of this script.
 
 - Set your `CONTACT_EMAIL` in [config/config.sh](./config/config.sh)
 ```
@@ -68,3 +54,12 @@ docker run -it -v $(pwd):/opt/le --env-file .envdocker le /opt/le/letsencrypt.sh
 cd lets-encrypt-python
 docker run -d -v $(pwd):/opt/le --env-file .envdocker le
 ```
+
+## Contributors
+
+Much of this project is based on the work of these projects:
+
+* https://devcentral.f5.com/codeshare/lets-encrypt-on-a-big-ip
+* https://github.com/lukas2511/letsencrypt.sh
+* https://github.com/sporky/letsencrypt-dns
+* https://github.com/major/letsencrypt-rackspace-hook
