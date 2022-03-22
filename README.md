@@ -66,8 +66,8 @@ Processing example.com
  + (hook) Existing Cert/Key updated in transaction.
  + Done!
 ```
-![Certs on BIG-IP](le_certs_bigip.png)
-![Cert Details](le_cert_details.png)
+![Certs on BIG-IP](img/le_certs_bigip.png)
+![Cert Details](img/le_cert_details.png)
 
 ## Caveats
 I tested one use case for a standard domain. Let's Encrypt and dehydrated support far more
