@@ -14,7 +14,7 @@ import time
 requests.packages.urllib3.disable_warnings()
 
 # slurp credentials
-with open('config/creds.json', 'r') as f:
+with open('../config/creds.json', 'r') as f:
     config = json.load(f)
 f.close()
 
