@@ -111,7 +111,6 @@ HOOK=${BASEDIR}/hook_script.py
 
 # E-mail to use during the registration (default: <unset>)
 #CONTACT_EMAIL=
-CONTACT_EMAIL="me@example.com"
 
 # Lockfile location, to prevent concurrent access (default: $BASEDIR/lock)
 #LOCKFILE="${BASEDIR}/lock"
