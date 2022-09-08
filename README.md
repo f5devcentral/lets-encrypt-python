@@ -16,6 +16,7 @@ than certificate management and should have its own workflow.
 
 ### [Tim Riker](https://rikers.org) added
 * run as non-root in a working directory
+* include full chain in .crt so no separate chain is needed
 * create SSL profiles if missing
 * create client-ssl profiles if missing
 * irule uses a datagroup to handle multiple challenges for multiple names in a certificate.
