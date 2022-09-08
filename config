@@ -66,7 +66,7 @@ CHALLENGETYPE="http-01"
 
 # Output directory for challenge-tokens to be served by webserver or deployed in HOOK (default: /var/www/dehydrated)
 #WELLKNOWN="/var/www/dehydrated"
-WELLKNOWN="/etc/dehydrated/wellknowns"
+WELLKNOWN="wellknown"
 
 # Default keysize for private keys (default: 4096)
 #KEYSIZE="4096"
@@ -92,7 +92,7 @@ CURL_OPTS="--http1.1"
 # BASEDIR and WELLKNOWN variables are exported and can be used in an external program
 # default: <unset>
 #HOOK=
-HOOK=/etc/dehydrated/hook_script.py
+HOOK=${BASEDIR}/hook_script.py
 
 # Chain clean_challenge|deploy_challenge arguments together into one hook call per certificate (default: no)
 #HOOK_CHAIN="no"
