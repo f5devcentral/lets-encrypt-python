@@ -14,34 +14,73 @@ out the mostly-retired [f5-sdk](https://github.com/f5networks/f5-common-python) 
 Removed from this project altogether is the creation of client SSL profiles, as that is a separate function
 than certificate management and should have its own workflow.
 
+### [Tim Riker](https://rikers.org) added
+* run as non-root in a working directory
+* create SSL profiles if missing
+* create client-ssl profiles if missing
+* irule uses a datagroup to handle multiple challenges for multiple names in a certificate.
+
+## Getting Started
+
+Install dehydrated. On Debian based distros this probably works:
+
+```bash
+$ sudo apt install dehydrated
+```
+
+Install bigrest in python
+```bash
+$ pip install bigrest
+```
+Set CONTACT_EMAIL in config to your email.
+
+register with dehydrated
+```bash
+$ dehydrated -f config --register --accept-terms
+```
+Add your domains and aliases to domains.txt and try a request
+```bash
+$ dehydrated -f config -c --force --force-validation
+```
+
+
 ## Test Setup
 ```bash
-/etc/dehydrated/config # Dehydrated configuration file
-/etc/dehydrated/domains.txt # Domains to sign and generate certs for
-/etc/dehydrated/dehydrated # acme client
-/etc/dehydrated/challenge.irule # iRule configured and deployed to BIG-IP by the hook script
-/etc/dehydrated/hook_script.py # Python script called by dehydrated for special steps in the cert generation process
+config # Dehydrated configuration file (edit CONTACT_EMAIL)
+domains.txt # Domains to sign and generate certs for (add names and aliases)
+dehydrated # acme client (install)
+bigrest # install python library
+rule_le_challenge.iRule # iRule configured and deployed to BIG-IP by the hook script
+hook_script.py # Python script called by dehydrated for special steps in the cert generation process
+
 # Environment Variables
-export F5_HOST=x.x.x.x
+export F5_HOST=f.q.d.n
 export F5_USER=admin
 export F5_PASS=admin
+export F5_HTTP=vs_vip-name_HTTP
+export F5_HTTPS=vs_vip-name_HTTPS
 ```
 ## Usage
 
 ### Testing - Stage API
-./dehydrated -c --force --force-validation
+```bash
+$ dehydrated -f config -c --force --force-validation
+```
 
 ### Otherwise
-./dehydrated -c
+```bash
+$ dehydrated -f config -c
+```
 
 ## Expected Output
 
 ```bash
-# ./dehydrated -c --force --force-validation
-# INFO: Using main config file /etc/dehydrated/config
+$ dehydrated -f config -c --force --force-validation
+# INFO: Using main config file config
 Processing example.com
+ + Checking domain name(s) of existing cert... unchanged.
  + Checking expire date of existing cert...
- + Valid till Jun 20 02:03:26 2022 GMT (Longer than 30 days). Ignoring because renew was forced!
+ + Valid till Dec  7 17:08:55 2022 GMT (Longer than 30 days). Ignoring because renew was forced!
  + Signing domains...
  + Generating private key...
  + Generating signing request...
@@ -51,19 +90,24 @@ Processing example.com
  + A valid authorization has been found but will be ignored
  + 1 pending challenge(s)
  + Deploying challenge tokens...
- + (hook) Deploying Challenge
- + (hook) Challenge rule added to virtual.
+ + (hook) Deploying Challenge example.com
+ + (hook) irule rule_le_challenge added.
+ + (hook) datagroup dg_le_challenge added.
+ + (hook) Challenge rule added to virtual vs_example.com_HTTP.
+ + (hook) Challenge added to datagroup dg_le_challenge for example.com.
  + Responding to challenge for example.com authorization...
  + Challenge is valid!
  + Cleaning challenge tokens...
- + (hook) Cleaning Challenge
- + (hook) Challenge rule removed from virtual.
+ + (hook) Cleaning Challenge example.com
+ + (hook) Challenge rule rule_le_challenge removed from virtual vs_example.com_HTTP.
+ + (hook) irule rule_le_challenge removed.
+ + (hook) datagroup dg_le_challenge removed.
  + Requesting certificate...
  + Checking certificate...
  + Done!
  + Creating fullchain.pem...
- + (hook) Deploying Certs
- + (hook) Existing Cert/Key updated in transaction.
+ + (hook) Deploying Certs example.com
+ + (hook) Cert/Key example.com updated in transaction.
  + Done!
 ```
 ![Certs on BIG-IP](img/le_certs_bigip.png)
