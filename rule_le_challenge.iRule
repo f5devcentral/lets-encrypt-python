@@ -1,0 +1,17 @@
+# look up Let's Encrypt validation requests in dg_le_challenge and return if found
+# pass through if not found in dg
+# Tim Riker <Tim@Rikers.org>
+
+when HTTP_REQUEST {
+    if { [class exists dg_le_challenge] } {
+        if {"[HTTP::uri]" starts_with "/.well-known/acme-challenge/"} {
+            set log(lekey) [getfield "[HTTP::uri]" "/" 4]
+            set log(levalue) [class match -value -- $log(lekey) equals dg_le_challenge]
+            if { $log(levalue) ne "" } {
+                HTTP::respond 200 content "$log(levalue)\n" "Content-Type" "text/plain" "Connection" "close"
+                event disable
+                return
+            }
+        }
+    }
+}

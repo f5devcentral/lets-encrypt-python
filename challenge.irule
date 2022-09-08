@@ -1,6 +1,0 @@
-when HTTP_REQUEST {
-  log local0. "[HTTP::header User-Agent]"
-  if { ([HTTP::uri] eq "/.well-known/acme-challenge/TOKENFILE") && ([HTTP::header User-Agent] contains "Let's Encrypt validation server") } {
-    HTTP::respond 200 content TOKENVALUE
-  } else { HTTP::respond 404 content "not found" }
-}
