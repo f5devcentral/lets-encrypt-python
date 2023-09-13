@@ -134,8 +134,8 @@ Processing example.com
 I tested one use case for a standard domain. Let's Encrypt and dehydrated support far more
 than I tested, so you'll likely need to do additional development to support those.
 
-** S Campbell - added ability for multiple certificates including SAN certificates 
-** virtual_servers file needs an entry for EACH SAN. Could investigate "HOOK_CHAIN=yes" functionality in dehydrated and then change hook script to deal with all SANs at once.
+* S Campbell - added ability for multiple certificates including SAN certificates 
+* virtual_servers file needs an entry for EACH SAN. Could investigate "HOOK_CHAIN=yes" functionality in dehydrated and then change hook script to deal with all SANs at once.
 
 ## Contributors
 
