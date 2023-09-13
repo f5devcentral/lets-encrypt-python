@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+# only required if separate python environment needed - otherwise commands can be directly added to your crontab
+cd /home/f5le/lets-encrypt-python
+source /home/f5le/pythonvenv/python37/bin/activate
+./dehydrated -c -g 2>&1
