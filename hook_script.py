@@ -9,11 +9,14 @@ import sys
 
 requests.packages.urllib3.disable_warnings()
 
+# Set parent profile of all clientssl profiles created through this script
+BaseSSLProfile = "/Common/clientssl-secure"
+
 def get_credentials():
-    return {'host': os.getenv('F5_HOST'), 'user': os.getenv('F5_USER'), 'pass': os.getenv('F5_PASS')}
+    return {'host': f5_creds['HOST'], 'user': f5_creds['USER'], 'pass': f5_creds['PASS']}
 
 def instantiate_bigip(credentials):
-    return BIGIP(credentials.get('host'), credentials.get('user'), credentials.get('pass'))
+    return BIGIP(credentials.get('host'), credentials.get('user'), credentials.get('pass'), session_verify=False)
 
 def deploy_challenge(args):
     br = instantiate_bigip(get_credentials())
@@ -30,13 +33,13 @@ def deploy_challenge(args):
         logger.info(' + (hook) datagroup dg_le_challenge added.')
     if br.exist('/mgmt/tm/ltm/rule/rule_le_challenge'):
         vip = br.load(f'/mgmt/tm/ltm/virtual/{f5_http}')
-        if '/Common/rule_le_challenge' not in vip.properties['rules']:
-            if vip.properties.get('rules') is None:
-                vip.properties['rules'] = ['rule_le_challenge']
-            elif not '/mgmt/tm/ltm/rule/rule_le_challenge' in vip.properties['rules']:
+        if vip.properties.get('rules') is None:
+            vip.properties['rules'] = ['rule_le_challenge']
+        elif '/Common/rule_le_challenge' not in vip.properties['rules']:
+            if not '/mgmt/tm/ltm/rule/rule_le_challenge' in vip.properties['rules']:
                 vip.properties['rules'].insert(0,'rule_le_challenge')
-            br.save(vip)
-            logger.info(f' + (hook) Challenge rule added to virtual {f5_http}.')
+        br.save(vip)
+        logger.info(f' + (hook) Challenge rule added to virtual {f5_http}.')
     dg = br.load('/mgmt/tm/ltm/data-group/internal/dg_le_challenge')
     dg.properties['records'].append({'name':args[1],'data':args[2]})
     br.save(dg)
@@ -49,16 +52,24 @@ def invalid_challenge(args):
 def clean_challenge(args):
     br = instantiate_bigip(get_credentials())
     vip = br.load(f'/mgmt/tm/ltm/virtual/{f5_http}')
-    if '/Common/rule_le_challenge' in vip.properties['rules']:
+    if vip.properties.get('rules') is None:
+        logger.info(f' + (hook) irule has already been removed probably due to SAN cert.')
+    elif '/Common/rule_le_challenge' in vip.properties['rules']:
         vip.properties['rules'].remove('/Common/rule_le_challenge')
         br.save(vip)
         logger.info(f' + (hook) Challenge rule rule_le_challenge removed from virtual {f5_http}.')
     if br.exist('/mgmt/tm/ltm/rule/rule_le_challenge'):
-        br.delete('/mgmt/tm/ltm/rule/rule_le_challenge')
-        logger.info(f' + (hook) irule rule_le_challenge removed.')
+        try:
+            br.delete('/mgmt/tm/ltm/rule/rule_le_challenge')
+            logger.info(f' + (hook) irule rule_le_challenge removed.')
+        except Exception:
+            logger.info(f' + (hook) Error: irule rule_le_challenge still attached to a Virtual Server.')
     if br.exist('/mgmt/tm/ltm/data-group/internal/dg_le_challenge'):
-        br.delete('/mgmt/tm/ltm/data-group/internal/dg_le_challenge')
-        logger.info(' + (hook) datagroup dg_le_challenge removed.')
+        try:
+            br.delete('/mgmt/tm/ltm/data-group/internal/dg_le_challenge')
+            logger.info(' + (hook) datagroup dg_le_challenge removed.')
+        except Exception:
+            logger.info(f' + (hook) Error: datagroup dg_le_challenge could not be removed.')
 
 def deploy_cert(args):
     br = instantiate_bigip(get_credentials())
@@ -85,7 +96,7 @@ def deploy_cert(args):
     if not br.exist(f'/mgmt/tm/ltm/profile/client-ssl/auto_le_{args[0]}'):
         sslprof = {
             'name' : f'auto_le_{args[0]}',
-            'defaultsFrom': '/Common/clientssl',
+            'defaultsFrom': (BaseSSLProfile),
             'certKeyChain': [{
                 'name': f'{args[0]}_0',
                 'cert': f'/Common/auto_le_{args[0]}.crt',
@@ -95,8 +106,6 @@ def deploy_cert(args):
         logger.info(sslprof)
         br.create('/mgmt/tm/ltm/profile/client-ssl', sslprof)
         logger.info(f' + (hook) client-ssl profile created auto_le_{args[0]}.')
-    #profiles = br.load(f'/mgmt/tm/ltm/virtual/{f5_https}/profiles')
-    #logger.info(profiles)
 
 def unchanged_cert(args):
     logger.info(f' + (hook) No changes necessary.')
@@ -107,9 +116,13 @@ if __name__ == '__main__':
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)
 
-    # get virtualserver names from environment
-    f5_http = os.getenv('F5_HTTP')
-    f5_https = os.getenv('F5_HTTPS')
+    # read domain to LB Virtual Server xref file
+    f = open("virtual_servers", 'r')
+    f5_vsxref = json.loads(f.read())
+
+    # read f5 credentials file
+    f = open(".f5creds", 'r')
+    f5_creds = json.loads(f.read())
 
     if len(sys.argv) > 2:
         hook = sys.argv[1]
@@ -117,16 +130,21 @@ if __name__ == '__main__':
         hook = ''
     if hook == 'deploy_challenge':
         logger.info(f' + (hook) Deploying Challenge {sys.argv[2]}')
+        f5_http = f5_vsxref[(sys.argv[2])]
         deploy_challenge(sys.argv[2:])
     elif hook == 'invalid_challenge':
         logger.info(f' + (hook) Invalid Challenge {sys.argv[2]}')
+        f5_http = f5_vsxref[(sys.argv[2])]
         invalid_challenge(sys.argv[2:])
     elif hook == 'clean_challenge':
         logger.info(f' + (hook) Cleaning Challenge {sys.argv[2]}')
+        f5_http = f5_vsxref[(sys.argv[2])]
         clean_challenge(sys.argv[2:])
     elif hook == 'deploy_cert':
         logger.info(f' + (hook) Deploying Certs {sys.argv[2]}')
+        f5_http = f5_vsxref[(sys.argv[2])]
         deploy_cert(sys.argv[2:])
     elif hook == 'unchanged_cert':
         logger.info(f' + (hook) Unchanged Certs {sys.argv[2]}')
+        f5_http = f5_vsxref[(sys.argv[2])]
         unchanged_cert(sys.argv[2:])
