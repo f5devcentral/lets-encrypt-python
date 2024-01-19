@@ -1,6 +1,9 @@
 #!/usr/bin/bash
 
+# find where the script lives
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 # only required if separate python environment needed - otherwise commands can be directly added to your crontab
-cd /home/f5le/lets-encrypt-python
-source /home/f5le/pythonvenv/python37/bin/activate
+cd $SCRIPT_DIR/lets-encrypt-python
+source $SCRIPT_DIR/pythonvenv/python37/bin/activate
 ./dehydrated -c -g 2>&1
