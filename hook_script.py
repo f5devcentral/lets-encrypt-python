@@ -13,7 +13,10 @@ requests.packages.urllib3.disable_warnings()
 BaseSSLProfile = "/Common/clientssl-secure"
 
 def get_credentials():
-    return {'host': f5_creds['HOST'], 'user': f5_creds['USER'], 'pass': f5_creds['PASS']}
+    if 'f5_creds' in globals():
+        return {'host': f5_creds['HOST'], 'user': f5_creds['USER'], 'pass': f5_creds['PASS']}
+    else:
+        return {'host': os.getenv('F5_HOST'), 'user': os.getenv('F5_USER'), 'pass': os.getenv('F5_PASS')}
 
 def instantiate_bigip(credentials):
     return BIGIP(credentials.get('host'), credentials.get('user'), credentials.get('pass'), session_verify=False)
@@ -120,9 +123,10 @@ if __name__ == '__main__':
     f = open("virtual_servers", 'r')
     f5_vsxref = json.loads(f.read())
 
-    # read f5 credentials file
-    f = open(".f5creds", 'r')
-    f5_creds = json.loads(f.read())
+    if os.access(".f5creds", os.R_OK):
+        # read f5 credentials file
+        f = open(".f5creds", 'r')
+        f5_creds = json.loads(f.read())
 
     if len(sys.argv) > 2:
         hook = sys.argv[1]
