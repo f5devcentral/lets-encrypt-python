@@ -1,6 +1,0 @@
-{
- "domain.name": "VirtualServerNameOnLB_HTTP_if_available",
- "example.com": "VS_example.com_http",
- "anotherexample.com": "VS_anotherexample.com_https",
- "www.anotherexample.com": "VS_anotherexample.com_https"
-}
