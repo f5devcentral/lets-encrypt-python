@@ -14,7 +14,7 @@ out the mostly-retired [f5-sdk](https://github.com/f5networks/f5-common-python) 
 **(Overridden by Tim Riker) Removed from this project altogether is the creation of client SSL profiles, as that is a separate function
 than certificate management and should have its own workflow.
 
-### [Tim Riker](https://rikers.org) added
+### [Tim Riker](https://rikers.org) September 2022
 * run as non-root in a working directory
 * include full chain in .crt so no separate chain is needed
 * create or update certs/keys
@@ -50,7 +50,9 @@ register with dehydrated
 $ dehydrated -f config --register --accept-terms
 ```
 
-Edit virtual_servers file to include domain x Virtual Server mapping
+Create a json file .f5creds with "host", "user", and "pass" or use env variable below.
+
+Copy virtual_servers.example file to virtual_servers and include domain x Virtual Server mapping
 
 Add your domains and aliases to domains.txt and try a request
 ```bash
@@ -68,7 +70,7 @@ bigrest # install python library
 rule_le_challenge.iRule # iRule configured and deployed to BIG-IP by the hook script
 hook_script.py # Python script called by dehydrated for special steps in the cert generation process
 
-# Environment Variables (credentials moved to .f5creds file, vs_vip listings moved to virtual_servers file - S Campbell)
+# Environment Variables (credentials can be in .f5creds file, vs_vip listings moved to virtual_servers file - S Campbell)
 #export F5_HOST=f.q.d.n
 #export F5_USER=admin
 #export F5_PASS=admin
